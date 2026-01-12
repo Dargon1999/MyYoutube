@@ -5,27 +5,52 @@ app = Flask(__name__)
 app.secret_key = "premium2026mini"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Используем системную папку загрузок пользователя
 DOWNLOAD_FOLDER = os.path.join(os.path.expanduser("~"), "Downloads")
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 if sys.platform == 'win32':
     FFMPEG_PATH = os.path.join(BASE_DIR, "ffmpeg.exe")
 else:
-    FFMPEG_PATH = "ffmpeg"  # Для Linux/Render используем системный ffmpeg
+    FFMPEG_PATH = "ffmpeg"
+COOKIES_PATH = os.path.join(BASE_DIR, "cookies.txt")
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     info = None
     url = request.form.get("url", "").strip() if request.method == "POST" else request.args.get("url", "")
+    if request.method == "POST":
+        use_cookies = request.form.get("use_cookies") == "1"
+        cookies_text = request.form.get("cookies_text", "").strip()
+        cookies_file = request.files.get("cookies_file")
+        try:
+            if use_cookies or cookies_text or (cookies_file and cookies_file.filename):
+                if cookies_file and cookies_file.filename:
+                    data = cookies_file.read()
+                    try:
+                        text = data.decode("utf-8", errors="ignore")
+                    except:
+                        text = data.decode("latin-1", errors="ignore")
+                else:
+                    text = cookies_text
+                if text:
+                    with open(COOKIES_PATH, "w", encoding="utf-8", errors="ignore") as f:
+                        f.write(text)
+                    flash("Cookies сохранены")
+        except Exception as e:
+            traceback.print_exc()
+            flash(f"Ошибка сохранения cookies: {str(e)}")
     if request.method == "POST" and url:
         try:
-            # Добавляем опции для обхода блокировок и улучшения совместимости
             ydl_opts = {
                 'quiet': True,
                 'noplaylist': True,
                 'nocheckcertificate': True,
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
+                }
             }
+            if os.path.exists(COOKIES_PATH):
+                ydl_opts['cookiefile'] = COOKIES_PATH
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
         except Exception as e:
@@ -50,6 +75,10 @@ def download():
                 'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '320'}],
                 'ffmpeg_location': FFMPEG_PATH,
                 'noplaylist': True,
+                'nocheckcertificate': True,
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
+                }
             }
         else:
             h = int(height)
@@ -59,7 +88,13 @@ def download():
                 'merge_output_format': 'mp4',
                 'ffmpeg_location': FFMPEG_PATH,
                 'noplaylist': True,
+                'nocheckcertificate': True,
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
+                }
             }
+        if os.path.exists(COOKIES_PATH):
+            opts['cookiefile'] = COOKIES_PATH
 
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
