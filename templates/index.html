@@ -126,9 +126,25 @@
         <h1>PREMIUM YT DOWNLOADER</h1>
         <div class="subtitle">• Свобода качества. Без ограничений. 2026 •</div>
 
-        <form method="POST" action="/" class="search-box">
+        <form method="POST" action="/" class="search-box" enctype="multipart/form-data">
             <input type="text" name="url" placeholder="Вставьте ссылку на YouTube..." value="{{ url }}" required>
             <button type="submit" class="btn-main">ПОКАЗАТЬ</button>
+        </form>
+
+        <form method="POST" action="/" enctype="multipart/form-data" style="margin-top: 10px;">
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <label>
+                    <input type="checkbox" name="use_cookies" value="1">
+                    Использовать cookies для YouTube
+                </label>
+                <input type="file" name="cookies_file" accept=".txt" style="color: white;">
+            </div>
+            <div style="margin-top: 10px;">
+                <textarea name="cookies_text" placeholder="Вставьте содержимое cookies.txt при необходимости" rows="3" style="width: 100%; padding: 10px; border-radius: 10px; background: #0f0f1a; color: white; border: 1px solid #3333ff;"></textarea>
+            </div>
+            <div style="margin-top: 10px;">
+                <button type="submit" class="btn-main" style="background: linear-gradient(90deg, #00ccff, #3333ff);">СОХРАНИТЬ COOKIES</button>
+            </div>
         </form>
 
         {% with messages = get_flashed_messages() %}
