@@ -20,10 +20,17 @@ def index():
     url = request.form.get("url", "").strip() if request.method == "POST" else request.args.get("url", "")
     if request.method == "POST" and url:
         try:
-            with yt_dlp.YoutubeDL({'quiet': True, 'noplaylist': True}) as ydl:
+            # Добавляем опции для обхода блокировок и улучшения совместимости
+            ydl_opts = {
+                'quiet': True,
+                'noplaylist': True,
+                'nocheckcertificate': True,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
-        except:
-            flash("Видео не найдено или ошибка ссылки")
+        except Exception as e:
+            traceback.print_exc()
+            flash(f"Ошибка при поиске: {str(e)}")
     return render_template("index.html", info=info, url=url)
 
 @app.route("/download", methods=["POST"])
